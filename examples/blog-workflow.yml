@@ -13,7 +13,7 @@
 #   - Issue closed            -> 下线该篇（清页面、列表、feed、search-index）
 #   - Comment created/edited/deleted -> 增量重建该篇（系列子文章即评论）
 #   - workflow_dispatch        -> 手动全局重建（修改 config.toml 后执行一次）
-name: build Internote
+name: build InterNote
 
 concurrency:
   # 构建必须串行：每个 run 都会 clone 全库、重新生成 dist/ 再 push，
@@ -59,26 +59,26 @@ jobs:
 
       - name: Clone InterNote source
         run: |
-          git clone https://github.com/interset-wq/InterNote.git /opt/Internote
-          cd /opt/Internote/
+          git clone https://github.com/interset-wq/InterNote.git /opt/InterNote
+          cd /opt/InterNote/
           # always track HEAD of main (no tags are maintained)
           git checkout $(git rev-parse HEAD)
 
       - name: Generate new html
         run: |
-          cp -r ./* /opt/Internote/
-          cd /opt/Internote/
+          cp -r ./* /opt/InterNote/
+          cd /opt/InterNote/
           uv run --frozen internote ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} --issue_number '${{ github.event.issue.number }}'
-          cp -a /opt/Internote/dist ${{ github.workspace }}
-          cp -a /opt/Internote/sources ${{ github.workspace }}
-          cp /opt/Internote/internote.json ${{ github.workspace }}
+          cp -a /opt/InterNote/dist ${{ github.workspace }}
+          cp -a /opt/InterNote/sources ${{ github.workspace }}
+          cp /opt/InterNote/internote.json ${{ github.workspace }}
 
       - name: Update html
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add .
-          git commit -a -m 'chore: auto update by Internote action' || echo "nothing to commit"
+          git commit -a -m 'chore: auto update by InterNote action' || echo "nothing to commit"
           git push || echo "nothing to push"
           sleep 3
 

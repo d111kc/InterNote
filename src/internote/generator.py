@@ -12,7 +12,7 @@ import urllib.request
 from pathlib import Path
 
 from . import frontmatter
-from .config import InternoteConfig, load_links
+from .config import InterNoteConfig, load_links
 from .constants import ICONS, get_i18n
 from .feed import build_feed, strip_build_date
 from .frontmatter import FrontMatterError
@@ -67,7 +67,7 @@ RESERVED_SLUGS = {
 class Generator:
     def __init__(
         self,
-        config: InternoteConfig,
+        config: InterNoteConfig,
         repo,
         repo_name: str,
         *,
@@ -200,7 +200,7 @@ class Generator:
                 continue
             try:
                 request = urllib.request.Request(
-                    source, headers={"User-Agent": "Internote"}
+                    source, headers={"User-Agent": "InterNote"}
                 )
                 with urllib.request.urlopen(request, timeout=30) as response:
                     data = response.read()
@@ -274,7 +274,7 @@ class Generator:
             if not (self.favicon_src.get(name) == source and path.exists()):
                 try:
                     request = urllib.request.Request(
-                        source, headers={"User-Agent": "Internote"}
+                        source, headers={"User-Agent": "InterNote"}
                     )
                     with urllib.request.urlopen(request, timeout=30) as response:
                         data = response.read()
@@ -846,7 +846,7 @@ class Generator:
         try:
             request = urllib.request.Request(
                 "https://api.github.com/emojis",
-                headers={"User-Agent": "Internote"},
+                headers={"User-Agent": "InterNote"},
             )
             with urllib.request.urlopen(request, timeout=30) as response:
                 raw = json.loads(response.read().decode("utf-8"))
@@ -1105,7 +1105,7 @@ class Generator:
 - 字数：{words}
 - 构建：{now}
 
-Powered by [Internote](https://github.com/interset-wq/InterNote)
+Powered by [InterNote](https://github.com/interset-wq/InterNote)
 """
         (Path(workspace) / "README.md").write_text(
             text, encoding="utf-8"

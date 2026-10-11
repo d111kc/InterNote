@@ -109,7 +109,7 @@ class FriendLink(BaseModel):
         return self
 
 
-class InternoteConfig(BaseModel):
+class InterNoteConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     site: SiteConfig
@@ -152,9 +152,9 @@ class InternoteConfig(BaseModel):
         }
 
 
-def load_config(path: str | Path) -> InternoteConfig:
+def load_config(path: str | Path) -> InterNoteConfig:
     data = tomllib.loads(Path(path).read_text(encoding="utf-8"))
-    return InternoteConfig.model_validate(data)
+    return InterNoteConfig.model_validate(data)
 
 
 def load_links(path: str | Path) -> list[FriendLink]:

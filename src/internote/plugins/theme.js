@@ -51,7 +51,7 @@
     apply(next);
   }
 
-  window.InternoteTheme = { apply: apply, cycle: cycle };
+  window.InterNoteTheme = { apply: apply, cycle: cycle };
 
   function init() {
     var toggle = document.getElementById('in-theme-toggle');

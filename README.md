@@ -25,7 +25,7 @@
 2. 【添加配置】复制本仓库的 `config.sample.toml` 为博客仓库根目录的 `config.toml` 并修改
 3. 【添加 workflow】复制本仓库的 `examples/blog-workflow.yml` 到博客仓库的 `.github/workflows/internote.yml`
 4. 【启用 Pages】博客仓库 `Settings -> Pages -> Build and deployment -> Source` 选择 `GitHub Actions`
-5. 【首次全局生成】Actions 页面手动运行 `build Internote -> Run workflow`
+5. 【首次全局生成】Actions 页面手动运行 `build InterNote -> Run workflow`
 6. 【开始写作】新建 Issue，保存后自动构建，片刻后通过 Pages 地址访问；不加 Label 也可以，文章会归入 `default` 标签
 
 > 博客仓库会提交生成产物：`dist/`（站点）、`sources/`（Issue 源码备份）、

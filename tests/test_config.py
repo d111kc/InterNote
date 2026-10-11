@@ -4,7 +4,7 @@ import pathlib
 import pytest
 from pydantic import ValidationError
 
-from internote.config import InternoteConfig, load_config, load_links
+from internote.config import InterNoteConfig, load_config, load_links
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -157,7 +157,7 @@ class TestContext:
         assert isinstance(ctx["posts_per_page"], int)
 
     def test_direct_validation_without_a_file(self):
-        cfg = InternoteConfig.model_validate({"site": {"title": "T"}})
+        cfg = InterNoteConfig.model_validate({"site": {"title": "T"}})
         assert cfg.context()["title"] == "T"
 
 
