@@ -48,7 +48,9 @@
 > 关闭 Issue 即取消发布。已删除每日定时构建，因此没有事后清扫，`closed` 触发是唯一
 > 能让撤稿及时生效的方式。Pull Request 不会作为文章发布，也不会进入搜索索引。
 
-> blog workflow 总是检出 InterNote `main` 分支最新提交，本仓库的推送会影响线上博客的下一次构建。
+> blog workflow 模板通过 `INTERNOTE_REF` 固定检出 InterNote 的 release（当前 `v0.1.0`），
+> `main` 上的开发提交不会进入线上构建；发布新版本 = 打 tag 发 release 后，把 `INTERNOTE_REF`
+> 提到新 tag 并推送 workflow（模板与博客仓库各一份）。
 
 ## 本地开发
 

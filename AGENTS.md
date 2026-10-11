@@ -40,9 +40,9 @@ README is Chinese — keep new user-facing docs consistent.
 ## Two-repo flow (get this wrong and you break the live blog)
 
 - Blog repo = Issues (labels optional; unlabelled issues publish as `default`) + `config.toml` + `.github/workflows/internote.yml` (copy of `examples/blog-workflow.yml`). This repo never stores posts.
-- Blog CI **clones this repo** into `/opt/InterNote` (always HEAD of `main`; the old `site.version` pinning was removed), overlays the blog files, runs the CLI, commits artifacts back, deploys Pages.
+- Blog CI **clones this repo** into `/opt/InterNote`, overlays the blog files, runs the CLI, commits artifacts back, deploys Pages. The workflow **template** pins the build to a release tag via the `INTERNOTE_REF` env (currently `v0.1.0`); the live blog repo's workflow still tracks `main` HEAD until it adopts the template (its copy is not auto-synced — update by hand, and the owner has chosen to do that on their own schedule).
 - **Schema sync**: a `config.py` change must be applied to the blog repo's `config.toml` and, if the workflow changed, to `.github/workflows/internote.yml` in the same change — `extra="forbid"` turns stale blog keys into a hard build failure. (GitHub contents-API `PUT` on that repo's workflow paths 404s; clone the blog repo and push instead.) Normalise the workflow file to the blog repo's line endings (it is LF) or the whole file shows as changed.
-- Therefore: **pushing to `main` here changes the live blog** at the next build (any issue or comment event, or manual dispatch — there is deliberately no cron).
+- Therefore the template's flow is release-gated: tag + `gh release create`, bump `INTERNOTE_REF`, sync the blog repo's workflow. **Until the live blog repo adopts the pinned workflow, pushing to `main` here still changes the live blog** at the next build (any issue or comment event, or manual dispatch — there is deliberately no cron).
 - `dist/`, `sources/`, `internote.json` are git-ignored here but must be committed by the blog repo (README `.gitignore` warning).
 - Local deploy trigger: `gh workflow run internote.yml -R interset-wq/blog` then `gh run watch <id> -R interset-wq/blog --exit-status`.
 

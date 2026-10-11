@@ -15,6 +15,13 @@
 #   - workflow_dispatch        -> 手动全局重建（修改 config.toml 后执行一次）
 name: build InterNote
 
+# InterNote release pin — the build checks out this release tag, never
+# moving main: dev commits cannot reach the live site until a new release
+# is tagged (https://github.com/interset-wq/InterNote/releases) and this
+# value is bumped. Keep the template and each blog repo's copy in sync.
+env:
+  INTERNOTE_REF: v0.1.0
+
 concurrency:
   # 构建必须串行：每个 run 都会 clone 全库、重新生成 dist/ 再 push，
   # 并发 run 会互相 push 冲突导致产物丢失（连续创建/关闭 issue 时必现）。
@@ -61,8 +68,10 @@ jobs:
         run: |
           git clone https://github.com/interset-wq/InterNote.git /opt/InterNote
           cd /opt/InterNote/
-          # always track HEAD of main (no tags are maintained)
-          git checkout $(git rev-parse HEAD)
+          # build from the pinned release, never from moving main:
+          # dev commits on main cannot reach the live site until a release
+          # is tagged and INTERNOTE_REF is bumped
+          git checkout "$INTERNOTE_REF"
 
       - name: Generate new html
         run: |
