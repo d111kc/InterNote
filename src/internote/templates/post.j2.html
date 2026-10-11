@@ -33,7 +33,7 @@
 {% block header %}
   {# single-row content header: page title left, home button right
      (site_nav appends the theme toggle itself) #}
-  <h1 class="in-page-title in-post-title">{{ post.title }}</h1>
+  <h1 class="in-page-title">{{ post.title }}</h1>
   {% call site_nav('Post navigation') %}
     {{ nav_link('home', site.home_url, i18n.home) }}
   {% endcall %}
