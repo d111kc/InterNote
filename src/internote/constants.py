@@ -21,6 +21,13 @@ I18N = {
     "noResults": "未找到结果",
     "tags": "标签",
     "links": "友链",
+    "linksApplyTitle": "申请友链",
+    "linksName": "站点名称",
+    "linksUrl": "站点地址",
+    "linksAvatar": "头像地址",
+    "linksDesc": "一句话介绍",
+    "linksCopy": "复制配置",
+    "linksApplyHint": "填写后复制生成的配置，粘贴到下方评论即可提交申请",
     "copied": "已复制",
     "posts": "篇文章",
 }

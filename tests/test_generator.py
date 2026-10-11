@@ -87,9 +87,14 @@ def issue(
     }
 
 
-def build(tmp_path, issues, labels=None, incremental=None):
+def build(tmp_path, issues, labels=None, incremental=None, config=None):
     repo, markdown = make_repo(tmp_path, issues, labels)
-    cfg = load_config(write_config(tmp_path))
+    if config is None:
+        cfg = load_config(write_config(tmp_path))
+    else:
+        path = tmp_path / "config.toml"
+        path.write_text(config, encoding="utf-8")
+        cfg = load_config(path)
     gen = Generator(cfg, repo, repo_name="owner/blog", markdown=markdown, root=tmp_path)
     if incremental:
         gen.run_one(incremental)
@@ -756,3 +761,43 @@ class TestSubPosts:
     def test_hash_hash_led_comment_stays_an_ordinary_comment(self, tmp_path):
         build(tmp_path, [issue(number=7, comments=[(9001, "## not an h1\n\nplain reply", "OWNER")])])
         assert not (tmp_path / "dist" / "post" / "7_9001.html").exists()
+
+
+class TestLinksPage:
+    """The links page comes from the blog repo's optional links.toml;
+    the apply form + giscus thread exist only when comments are on."""
+
+    LINKS = '[[links]]\nname = "A"\nurl = "https://a.example"\n'
+
+    def test_links_page_with_apply_form_and_giscus(self, tmp_path):
+        (tmp_path / "links.toml").write_text(self.LINKS, encoding="utf-8")
+        # comments only stay on when the giscus repo is configured too
+        # (the generator forces need_comment off without it)
+        build(
+            tmp_path,
+            [issue()],
+            config=CONFIG.replace(
+                "enabled = false",
+                "enabled = true\n\n[giscus]\nrepo = \"owner/blog\"\nrepo_id = \"R_ID\"\n"
+                "category = \"General\"\ncategory_id = \"DIC_ID\"",
+            ),
+        )
+        page = (tmp_path / "dist" / "links.html").read_text(encoding="utf-8")
+        assert "in-links-card" in page
+        assert 'id="in-links-toml"' in page
+        assert 'id="in-links-copy"' in page
+        # giscus section + its lazy loader
+        assert 'id="comments"' in page
+        assert "/plugins/giscus.js" in page
+
+    def test_comments_off_hides_the_apply_form(self, tmp_path):
+        (tmp_path / "links.toml").write_text(self.LINKS, encoding="utf-8")
+        build(tmp_path, [issue()])  # CONFIG default: comments disabled
+        page = (tmp_path / "dist" / "links.html").read_text(encoding="utf-8")
+        assert "in-links-card" in page
+        assert "in-links-apply" not in page
+        assert "/plugins/giscus.js" not in page
+
+    def test_no_links_toml_means_no_links_page(self, tmp_path):
+        build(tmp_path, [issue()])
+        assert not (tmp_path / "dist" / "links.html").exists()

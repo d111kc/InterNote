@@ -29,4 +29,86 @@
     </a>
     {% endfor %}
   </div>
+
+  {% if site.need_comment %}
+  {# friend-link application: the form generates the links.toml entry
+     live; the applicant copies it into a giscus comment below (the
+     mapping is pathname, so this page has its own thread) #}
+  <section class="in-links-apply">
+    <h2 class="in-links-apply-title">{{ i18n.linksApplyTitle }}</h2>
+    <div class="in-links-form">
+      <label class="in-links-field">
+        <span>{{ i18n.linksName }} *</span>
+        <input type="text" id="in-links-name" maxlength="40" placeholder="{{ i18n.linksName }}">
+      </label>
+      <label class="in-links-field">
+        <span>{{ i18n.linksUrl }} *</span>
+        <input type="text" id="in-links-url" placeholder="https://…" spellcheck="false">
+      </label>
+      <label class="in-links-field">
+        <span>{{ i18n.linksAvatar }}</span>
+        <input type="text" id="in-links-avatar" placeholder="https://… (favicon/logo)" spellcheck="false">
+      </label>
+      <label class="in-links-field">
+        <span>{{ i18n.linksDesc }}</span>
+        <input type="text" id="in-links-desc" maxlength="120" placeholder="{{ i18n.linksDesc }}">
+      </label>
+    </div>
+    <div class="in-links-toml">
+      <pre><code id="in-links-toml"></code></pre>
+      <button type="button" class="in-links-copy" id="in-links-copy" disabled>{{ i18n.linksCopy }}</button>
+    </div>
+    <p class="in-links-apply-hint">{{ i18n.linksApplyHint }}</p>
+  </section>
+  {% include 'components/comments.j2.html' %}
+  <script src="{{ site.home_url }}/plugins/giscus.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    var name = document.getElementById('in-links-name');
+    var url = document.getElementById('in-links-url');
+    var avatar = document.getElementById('in-links-avatar');
+    var desc = document.getElementById('in-links-desc');
+    var out = document.getElementById('in-links-toml');
+    var copy = document.getElementById('in-links-copy');
+    var COPY = {{ i18n.linksCopy | tojson }};
+    var COPIED = {{ i18n.copied | tojson }};
+    var timer;
+
+    function esc(value) {
+      return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    }
+
+    function render() {
+      var nameV = name.value.trim();
+      var urlV = url.value.trim();
+      var avatarV = avatar.value.trim();
+      var descV = desc.value.trim();
+      var lines = ['[[links]]'];
+      if (nameV) lines.push('name = "' + esc(nameV) + '"');
+      if (urlV) lines.push('url = "' + esc(urlV) + '"');
+      if (avatarV) lines.push('avatar = "' + esc(avatarV) + '"');
+      if (descV) lines.push('description = "' + esc(descV) + '"');
+      out.textContent = lines.join('\n');
+      copy.disabled = !(nameV && /^https?:\/\//.test(urlV));
+    }
+
+    [name, url, avatar, desc].forEach(function (field) {
+      field.addEventListener('input', render);
+    });
+
+    copy.addEventListener('click', function () {
+      navigator.clipboard.writeText(out.textContent).then(function () {
+        copy.textContent = COPIED;
+        clearTimeout(timer);
+        timer = setTimeout(function () {
+          copy.textContent = COPY;
+        }, 2000);
+      });
+    });
+
+    render();
+  })();
+  </script>
+  {% endif %}
 {% endblock %}
