@@ -204,7 +204,7 @@ a:hover { text-decoration: underline; }
 
 /* ===== Post ===== */
 .in-post-title {
-  font-size: 36px;
+  font-size: 26px;
   font-weight: 700;
   margin: 0 0 16px;
   line-height: 1.2;
@@ -583,7 +583,7 @@ a:hover { text-decoration: underline; }
 
 /* ===== Tag Page ===== */
 .in-page-title {
-  font-size: 32px;
+  font-size: 22px;
   font-weight: 700;
   margin: 0;
   overflow: hidden;
@@ -1447,7 +1447,7 @@ a:hover { text-decoration: underline; }
   .in-search-overlay { padding: 0; }
   .in-search-panel { max-height: 100vh; border-radius: 0; border: none; }
 
-  .in-post-title { font-size: 24px; }
+  .in-post-title { font-size: 22px; }
   /* `.in-page-title` (the tag page filter heading, e.g. "Tag #blog") is
      NOT hidden on mobile: it is the only place that shows the active
      filter, so hiding it would make tag.html look unresponsive. */
