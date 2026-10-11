@@ -79,18 +79,25 @@
       return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
     }
 
+    // links.toml requires a scheme; applicants type bare domains, so a
+    // missing scheme is normalised instead of rejected
+    function normUrl(value) {
+      return /^https?:\/\//i.test(value) ? value : "https://" + value;
+    }
+
     function render() {
       var nameV = name.value.trim();
       var urlV = url.value.trim();
       var avatarV = avatar.value.trim();
       var descV = desc.value.trim();
+      var urlOut = urlV ? normUrl(urlV) : "";
       var lines = ['[[links]]'];
       if (nameV) lines.push('name = "' + esc(nameV) + '"');
-      if (urlV) lines.push('url = "' + esc(urlV) + '"');
+      if (urlOut) lines.push('url = "' + esc(urlOut) + '"');
       if (avatarV) lines.push('avatar = "' + esc(avatarV) + '"');
       if (descV) lines.push('description = "' + esc(descV) + '"');
       out.textContent = lines.join('\n');
-      copy.disabled = !(nameV && /^https?:\/\//.test(urlV));
+      copy.disabled = !(nameV && urlV && !/\s/.test(urlV));
     }
 
     [name, url, avatar, desc].forEach(function (field) {
