@@ -1,0 +1,32 @@
+{% extends 'base.j2.html' %}
+{% from 'components/macros.j2.html' import head_meta, nav_link, site_nav with context %}
+
+{% block head %}
+  {{ head_meta(site.title ~ ' ' ~ i18n.links) }}
+{% endblock %}
+
+{% block header %}
+  {# single-row content header, same as post/tag #}
+  <h1 class="in-page-title">{{ i18n.links }}</h1>
+  {% call site_nav('Links navigation') %}
+    {{ nav_link('home', site.home_url, i18n.home) }}
+  {% endcall %}
+{% endblock %}
+
+{% block content %}
+  <div class="in-links-grid">
+    {% for link in site.links %}
+    <a class="in-links-card" href="{{ link.url }}" target="_blank" rel="noopener">
+      {% if link.avatar %}
+      <img class="in-links-avatar" src="{{ link.avatar }}" alt="{{ link.name }} avatar">
+      {% endif %}
+      <div class="in-links-info">
+        <p class="in-links-name">{{ link.name }}</p>
+        {% if link.description %}
+        <p class="in-links-description">{{ link.description }}</p>
+        {% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+{% endblock %}

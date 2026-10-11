@@ -19,6 +19,9 @@
 <nav class="in-header-nav" aria-label="Site navigation">
   {{ nav_link('home', site.home_url, i18n.home) }}
   {{ nav_link('tag', site.home_url ~ '/tag.html', i18n.tags) }}
+  {% if site.links %}
+  {{ nav_link('link', site.home_url ~ '/links.html', i18n.links) }}
+  {% endif %}
   {% if site.about %}
   {# the person glyph, not 'post' - this points at the about page #}
   {{ nav_link('about', site.home_url ~ '/' ~ site.about.url, site.about.title) }}

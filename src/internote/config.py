@@ -87,6 +87,28 @@ class SocialLink(BaseModel):
         return self
 
 
+class FriendLink(BaseModel):
+    """One friend link on the links page. Data comes from the blog
+    repo's own optional ``links.toml`` (sibling of config.toml) — NOT
+    from config.toml, which stays small no matter how many links exist."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    url: str
+    avatar: str = ""
+    description: str = ""
+
+    @model_validator(mode="after")
+    def _check_url(self):
+        if not re.match(r"https?://", self.url):
+            raise ValueError(
+                "friend link {!r}: url must start with http:// or "
+                "https://, got {!r}".format(self.name, self.url)
+            )
+        return self
+
+
 class InternoteConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -133,3 +155,14 @@ class InternoteConfig(BaseModel):
 def load_config(path: str | Path) -> InternoteConfig:
     data = tomllib.loads(Path(path).read_text(encoding="utf-8"))
     return InternoteConfig.model_validate(data)
+
+
+def load_links(path: str | Path) -> list[FriendLink]:
+    """Read the optional ``links.toml`` (sibling of config.toml in the
+    blog repo). A missing file or an empty ``[[links]]`` table means no
+    links — the links page and its nav icon are then not rendered."""
+    p = Path(path)
+    if not p.exists():
+        return []
+    data = tomllib.loads(p.read_text(encoding="utf-8"))
+    return [FriendLink.model_validate(item) for item in data.get("links", [])]

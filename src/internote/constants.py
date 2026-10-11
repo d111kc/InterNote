@@ -20,6 +20,7 @@ I18N = {
     "top": "回到顶部",
     "noResults": "未找到结果",
     "tags": "标签",
+    "links": "友链",
     "copied": "已复制",
     "posts": "篇文章",
 }

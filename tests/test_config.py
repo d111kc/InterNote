@@ -4,7 +4,7 @@ import pathlib
 import pytest
 from pydantic import ValidationError
 
-from internote.config import InternoteConfig, load_config
+from internote.config import InternoteConfig, load_config, load_links
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -227,5 +227,62 @@ class TestSocial:
                     tmp_path,
                     MINIMAL
                     + "\n[[social]]\nid = 'x'\naction = 'link'\nurl = 'https://x'\nlabel = 'x'\n",
+                )
+            )
+
+
+def write_links(tmp_path, text):
+    path = tmp_path / "links.toml"
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+class TestFriendLinks:
+    def test_missing_file_means_no_links(self, tmp_path):
+        assert load_links(tmp_path / "links.toml") == []
+
+    def test_empty_table_means_no_links(self, tmp_path):
+        assert load_links(write_links(tmp_path, "")) == []
+
+    def test_valid_entries(self, tmp_path):
+        path = write_links(
+            tmp_path,
+            "[[links]]\n"
+            'name = "Friend"\n'
+            'url = "https://friend.example.com"\n'
+            'avatar = "https://friend.example.com/a.png"\n'
+            'description = "A friend\'s blog"\n'
+            "\n"
+            "[[links]]\n"
+            'name = "Another"\n'
+            'url = "http://another.example.com"\n',
+        )
+        links = load_links(path)
+        assert [link.name for link in links] == ["Friend", "Another"]
+        assert links[0].avatar == "https://friend.example.com/a.png"
+        assert links[0].description == "A friend's blog"
+        assert links[1].avatar == ""
+
+    def test_missing_url_is_rejected(self, tmp_path):
+        with pytest.raises(ValidationError):
+            load_links(
+                write_links(tmp_path, '[[links]]\nname = "Friend"\n')
+            )
+
+    def test_non_http_url_is_rejected(self, tmp_path):
+        with pytest.raises(ValidationError):
+            load_links(
+                write_links(
+                    tmp_path,
+                    '[[links]]\nname = "Friend"\nurl = "ftp://friend.example.com"\n',
+                )
+            )
+
+    def test_unknown_key_is_rejected(self, tmp_path):
+        with pytest.raises(ValidationError):
+            load_links(
+                write_links(
+                    tmp_path,
+                    '[[links]]\nname = "Friend"\nurl = "https://x"\ncolor = "#fff"\n',
                 )
             )

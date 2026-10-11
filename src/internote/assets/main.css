@@ -592,6 +592,59 @@ a:hover { text-decoration: underline; }
   margin-bottom: 16px;
 }
 
+/* ===== Links page =====
+   Friend-link cards from the blog repo's optional links.toml; the
+   grid collapses to one column on phones on its own. */
+.in-links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.in-links-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--in-color-border);
+  border-radius: var(--in-radius);
+  background-color: var(--in-color-subtle);
+  min-width: 0;
+}
+
+.in-links-card:hover {
+  border-color: var(--in-color-accent);
+}
+
+.in-links-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.in-links-info {
+  min-width: 0;
+}
+
+.in-links-name {
+  margin: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.in-links-description {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--in-color-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Neutral chip + colour dot instead of saturated label backgrounds: the
    cloud reads as a toolbar, and the active filter gets an accent ring. */
 .in-tag-cloud-item {

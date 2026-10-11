@@ -12,7 +12,7 @@ import urllib.request
 from pathlib import Path
 
 from . import frontmatter
-from .config import InternoteConfig
+from .config import InternoteConfig, load_links
 from .constants import ICONS, get_i18n
 from .feed import build_feed, strip_build_date
 from .frontmatter import FrontMatterError
@@ -55,6 +55,7 @@ RESERVED_SLUGS = {
     "post",
     "tag",
     "rss",
+    "links",
     "search-index",
     "assets",
     "plugins",
@@ -94,6 +95,12 @@ class Generator:
         # the real numbers before the full page renders run.
         self.ctx["about"] = None
         self.ctx["post_count"] = 0
+        # friend links come from the blog repo's own optional links.toml
+        # (sibling of config.toml) - absent or empty = no links page and
+        # no nav icon; site-header reads site.links on every page, so it
+        # must exist from the start
+        self.links = [link.model_dump() for link in load_links(self.root / "links.toml")]
+        self.ctx["links"] = self.links
         self.ctx["label_color_dict"] = {
             label.name: "#" + label.color for label in repo.get_labels()
         }
@@ -941,16 +948,17 @@ class Generator:
             )
 
     def _create_lists(self):
-        nav_keys = ["sun", "moon", "sync", "tag", "search", "rss", "github", "upload", "post", "home", "about"]
+        nav_keys = ["sun", "moon", "sync", "tag", "search", "rss", "github", "upload", "post", "home", "about", "link"]
         nav_icon = {key: ICONS.get(key) for key in nav_keys}
         # tag.html does not link to itself, but its empty state and rows are
         # JS-built, so `tag` and `post` must both reach window.icons. The
         # index is JS-built too, so it needs `post`/`upload` for the cards.
         # `about` is here because 404.html reuses tag_context and its
         # site-identity header renders the person glyph for the about link.
+        # `link` is here for the same reason: the friend-links nav entry.
         tag_icon = {
             key: ICONS.get(key)
-            for key in ["sun", "moon", "sync", "home", "search", "tag", "post", "rss", "github", "about"]
+            for key in ["sun", "moon", "sync", "home", "search", "tag", "post", "rss", "github", "about", "link"]
         }
 
         # The conventional `about` alias earns a nav link on the index.
@@ -975,6 +983,12 @@ class Generator:
         # absolute home_url, so it is only rendered once home_url is known.
         self.renderer.render_to("404", tag_context, self.dist_dir / "404.html")
         print("create 404.html")
+
+        # the links page only exists when links.toml provided links - a
+        # site without friends gets neither the page nor a dead nav icon
+        if self.links:
+            self.renderer.render_to("links", tag_context, self.dist_dir / "links.html")
+            print("create links.html (%d links)" % len(self.links))
 
     def _render_list(self, html_dir, nav_icon):
         context = {
