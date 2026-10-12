@@ -33,7 +33,7 @@ DELIMITER = "+++"
 #: a root-level alias page that redirects there. The title is always the
 #: issue title and the description is always derived from the body, so
 #: neither can be overridden here.
-FIELDS = frozenset({"date", "draft", "comments", "pinned", "slug"})
+FIELDS = frozenset({"date", "draft", "comments", "pinned", "slug", "refs", "repo"})
 
 #: Keys a *sub-post comment* may set. A sub post is a collaborator
 #: comment on an issue; its body is the page content. The title falls
@@ -185,6 +185,42 @@ def _check_types(meta: dict) -> None:
         raise FrontMatterError(
             "front matter 'date' must be a TOML datetime, a unix timestamp or an "
             "ISO string, got {}".format(type(meta["date"]).__name__)
+        )
+    if "repo" in meta:
+        _check_link_url(meta["repo"], "repo")
+    if "refs" in meta:
+        value = meta["refs"]
+        if not isinstance(value, list):
+            raise FrontMatterError(
+                "front matter 'refs' must be an array of {{name = ..., url = ...}} "
+                "tables, got {}".format(type(value).__name__)
+            )
+        for item in value:
+            if not isinstance(item, dict) or set(item) - {"name", "url"}:
+                raise FrontMatterError(
+                    "front matter 'refs' items accept only the 'name' and 'url' "
+                    "keys, got {!r}".format(item)
+                )
+            if not isinstance(item.get("name"), str) or not item["name"].strip():
+                raise FrontMatterError(
+                    "front matter 'refs' item 'name' must be a non-empty string"
+                )
+            _check_link_url(item.get("url"), "refs url")
+
+
+def _check_link_url(value: object, key: str) -> None:
+    """A link field must be a non-empty absolute http(s) URL string."""
+    if not isinstance(value, str) or not value.strip():
+        raise FrontMatterError(
+            "front matter {!r} must be a non-empty URL string, got {}".format(
+                key, type(value).__name__
+            )
+        )
+    if not value.startswith(("http://", "https://")):
+        raise FrontMatterError(
+            "front matter {!r} must start with http:// or https://, got {!r}".format(
+                key, value
+            )
         )
 
 

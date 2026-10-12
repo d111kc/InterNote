@@ -496,6 +496,10 @@ class Generator:
             "top": 0,
             # Default is on: a page opts out with `comments = false`.
             "comments": meta.get("comments") is not False,
+            # Reference links render in the meta box; both are optional and
+            # default to "absent" so the rows simply never render.
+            "refs": meta.get("refs", []),
+            "repo": meta.get("repo"),
             "style": self.ctx["style"],
             "script": self.ctx["script"],
             "head": self.ctx["head"],
@@ -711,6 +715,9 @@ class Generator:
             # Sub pages carry giscus too; the parent's comments = false
             # opt-out applies to the whole series.
             "comments": entry["comments"],
+            # Reference links come from the parent issue's front matter.
+            "refs": entry.get("refs", []),
+            "repo": entry.get("repo"),
             # _decorate_body may have appended alert CSS / MathJax to the
             # entry copies; ctx["style"] would silently drop them.
             "style": entry["style"],
@@ -875,6 +882,8 @@ class Generator:
             "description": entry["description"],
             "body": post_body,
             "comments": entry["comments"],
+            "refs": entry.get("refs", []),
+            "repo": entry.get("repo"),
             "style": entry["style"],
             "script": entry["script"],
             "head": entry["head"],

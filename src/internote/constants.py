@@ -30,6 +30,7 @@ I18N = {
     "linksApplyHint": "填写后复制生成的配置，粘贴到下方评论即可提交申请",
     "copied": "已复制",
     "posts": "篇文章",
+    "postRepo": "源码",
 }
 
 ICONS = {

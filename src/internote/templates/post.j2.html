@@ -64,6 +64,20 @@
           {% endfor %}
         </span>
         {% endif %}
+        {% if post.repo %}
+        <span class="in-meta-repo">
+          {{ icon('github') }}
+          <a href="{{ post.repo }}" target="_blank" rel="noopener">{{ i18n.postRepo }}</a>
+        </span>
+        {% endif %}
+        {% if post.refs %}
+        <span class="in-meta-refs">
+          {{ icon('book') }}
+          {% for ref in post.refs %}
+          <a href="{{ ref.url }}" target="_blank" rel="noopener">{{ ref.name }}</a>
+          {% endfor %}
+        </span>
+        {% endif %}
         {% if post.issue_url %}
         <a class="in-post-edit" href="{{ post.issue_url }}" target="_blank" rel="noopener" title="{{ i18n.edit }}" aria-label="{{ i18n.edit }}">{{ icon('pencil') }}</a>
         {% endif %}

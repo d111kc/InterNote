@@ -801,3 +801,32 @@ class TestLinksPage:
     def test_no_links_toml_means_no_links_page(self, tmp_path):
         build(tmp_path, [issue()])
         assert not (tmp_path / "dist" / "links.html").exists()
+
+
+class TestRefsRepoMeta:
+    def test_refs_and_repo_render_in_the_meta_box(self, tmp_path):
+        build(
+            tmp_path,
+            [
+                issue(
+                    body=(
+                        "+++\n"
+                        'repo = "https://github.com/you/notes"\n'
+                        'refs = [{ name = "MDN", url = "https://developer.mozilla.org/" }]\n'
+                        "+++\nBody.\n"
+                    )
+                )
+            ],
+        )
+        html = (tmp_path / "dist" / "post" / "1.html").read_text(encoding="utf-8")
+        assert 'class="in-meta-repo"' in html
+        assert 'href="https://github.com/you/notes"' in html
+        assert 'class="in-meta-refs"' in html
+        assert 'href="https://developer.mozilla.org/"' in html
+        assert ">MDN<" in html
+
+    def test_absent_fields_render_no_rows(self, tmp_path):
+        build(tmp_path, [issue()])
+        html = (tmp_path / "dist" / "post" / "1.html").read_text(encoding="utf-8")
+        assert "in-meta-repo" not in html
+        assert "in-meta-refs" not in html

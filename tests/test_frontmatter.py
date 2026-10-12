@@ -182,3 +182,48 @@ class TestParseDate:
         # bool subclasses int, so without the guard True would become 1.
         with pytest.raises(FrontMatterError, match="boolean"):
             parse_date(True)
+
+
+class TestRefsAndRepo:
+    def test_refs_and_repo_parse(self):
+        text = block(
+            'repo = "https://github.com/you/notes"\n'
+            "refs = [\n"
+            '  { name = "MDN", url = "https://developer.mozilla.org/" },\n'
+            '  { name = "Express", url = "https://expressjs.com/" },\n'
+            "]"
+        )
+        meta, _ = split(text)
+        assert meta["repo"] == "https://github.com/you/notes"
+        assert meta["refs"] == [
+            {"name": "MDN", "url": "https://developer.mozilla.org/"},
+            {"name": "Express", "url": "https://expressjs.com/"},
+        ]
+
+    def test_repo_must_be_an_absolute_http_url(self):
+        with pytest.raises(FrontMatterError):
+            split(block('repo = "github.com/you/notes"'))
+
+    def test_repo_must_be_a_non_empty_string(self):
+        with pytest.raises(FrontMatterError):
+            split(block("repo = 123"))
+
+    def test_refs_must_be_a_table_array(self):
+        with pytest.raises(FrontMatterError):
+            split(block('refs = ["https://a.example"]'))
+
+    def test_refs_items_accept_only_name_and_url(self):
+        with pytest.raises(FrontMatterError):
+            split(
+                block(
+                    'refs = [{ name = "A", url = "https://a.example", extra = 1 }]'
+                )
+            )
+
+    def test_refs_item_name_must_be_non_empty(self):
+        with pytest.raises(FrontMatterError):
+            split(block('refs = [{ name = "", url = "https://a.example" }]'))
+
+    def test_refs_item_url_must_be_absolute_http(self):
+        with pytest.raises(FrontMatterError):
+            split(block('refs = [{ name = "A", url = "ftp://a.example" }]'))

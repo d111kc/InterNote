@@ -316,7 +316,9 @@ a:hover { text-decoration: underline; }
 /* one row per item: dates on their own line, labels on the next;
    the edit pencil is pinned to the first line's right edge */
 .in-meta-date,
-.in-meta-labels {
+.in-meta-labels,
+.in-meta-repo,
+.in-meta-refs {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -326,7 +328,8 @@ a:hover { text-decoration: underline; }
   margin-bottom: 6px;
 }
 
-.in-meta-labels {
+.in-meta-labels,
+.in-meta-refs {
   flex-wrap: wrap;
   gap: 4px 12px;
 }
