@@ -822,6 +822,8 @@ class TestRefsRepoMeta:
         assert 'class="in-meta-repo"' in html
         assert 'href="https://github.com/you/notes"' in html
         assert 'class="in-meta-refs"' in html
+        assert "<ul>" in html
+        assert "参考资料" in html
         assert 'href="https://developer.mozilla.org/"' in html
         assert ">MDN<" in html
 

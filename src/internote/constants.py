@@ -31,6 +31,7 @@ I18N = {
     "copied": "已复制",
     "posts": "篇文章",
     "postRepo": "源码",
+    "postRefs": "参考资料",
 }
 
 ICONS = {

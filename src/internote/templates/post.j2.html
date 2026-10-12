@@ -64,24 +64,21 @@
           {% endfor %}
         </span>
         {% endif %}
-        {% if post.repo %}
-        <span class="in-meta-repo">
-          {{ icon('github') }}
-          <a href="{{ post.repo }}" target="_blank" rel="noopener">{{ i18n.postRepo }}</a>
-        </span>
-        {% endif %}
-        {% if post.refs %}
-        <span class="in-meta-refs">
-          {{ icon('book') }}
-          {% for ref in post.refs %}
-          <a href="{{ ref.url }}" target="_blank" rel="noopener">{{ ref.name }}</a>
-          {% endfor %}
-        </span>
-        {% endif %}
+        {% if post.repo %}<a class="in-meta-repo" href="{{ post.repo }}" target="_blank" rel="noopener" title="{{ i18n.postRepo }}" aria-label="{{ i18n.postRepo }}">{{ icon('github') }}</a>{% endif %}
         {% if post.issue_url %}
         <a class="in-post-edit" href="{{ post.issue_url }}" target="_blank" rel="noopener" title="{{ i18n.edit }}" aria-label="{{ i18n.edit }}">{{ icon('pencil') }}</a>
         {% endif %}
       </div>
+      {% if post.refs %}
+      <div class="in-meta-refs">
+        <span class="in-meta-refs-title">{{ i18n.postRefs }}</span>
+        <ul>
+          {% for ref in post.refs %}
+          <li><a href="{{ ref.url }}" target="_blank" rel="noopener">{{ ref.name }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
       {% if post.series_crumb %}
       <details class="in-meta-series" aria-label="Series">
         <summary>
