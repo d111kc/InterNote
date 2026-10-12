@@ -13,6 +13,7 @@ Requires an authenticated gh CLI; no token is passed through args.
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import subprocess
 import sys
@@ -43,6 +44,21 @@ def _gh(*args: str, stdin: str | None = None) -> str:
 
 def _gh_json(path: str):
     return json.loads(_gh("api", path))
+
+
+def _gh_json_or_none(path: str):
+    """Like _gh_json but a non-zero exit (e.g. 404 no profile README)
+    yields None instead of aborting the whole fixture fetch."""
+    result = subprocess.run(
+        ("gh", "api", path),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    if result.returncode != 0:
+        return None
+    return json.loads(result.stdout)
 
 
 def _gh_markdown(text: str) -> str:
@@ -106,6 +122,16 @@ def fetch(repo: str) -> dict:
             }
         )
         print("fetched issue #{}: {}".format(number, issue["title"]))
+
+    # The profile repo's (<owner>/<owner>) README feeds the about page in
+    # readme/mixed modes; absent (404) simply means no profile README.
+    owner = repo.partition("/")[0]
+    profile = _gh_json_or_none("repos/{}/{}/readme".format(owner, owner))
+    if profile and profile.get("content"):
+        raw = base64.b64decode(profile["content"]).decode("utf-8")
+        data["profile_readme"] = raw
+        data["profile_readme_html"] = _gh_markdown(raw)
+        print("fetched profile README ({} chars)".format(len(raw)))
     return data
 
 
