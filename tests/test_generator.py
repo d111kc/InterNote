@@ -890,3 +890,83 @@ class TestSubPostRefsOverride:
                 tmp_path,
                 [issue(number=7, body=self.PARENT, comments=[(9001, sub, "OWNER")])],
             )
+
+
+class TestAboutModes:
+    """[site].about selects the about page source: issue (default),
+    readme (profile-repo README), mixed (about post + README) or none."""
+
+    ABOUT = '+++\nslug = "about"\n+++\nAbout body.'
+    README_MD = "Profile README content."
+    README_HTML = "<p>Profile README content.</p>"
+
+    def build_about(self, tmp_path, issues, mode, readme=True):
+        from internote.fixtures import load_repo
+
+        data = {
+            "repo": "owner/blog",
+            "labels": [{"name": "blog", "color": "ededed"}],
+            "issues": issues,
+        }
+        if readme:
+            data["profile_readme"] = self.README_MD
+            data["profile_readme_html"] = self.README_HTML
+        fx = tmp_path / "fixture.json"
+        fx.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+        repo, markdown = load_repo(fx)
+        cfg_path = tmp_path / "config.toml"
+        cfg_path.write_text(
+            CONFIG.replace("[site]\n", '[site]\nabout = "%s"\n' % mode),
+            encoding="utf-8",
+        )
+        gen = Generator(
+            load_config(cfg_path), repo,
+            repo_name="owner/blog", markdown=markdown, root=tmp_path,
+        )
+        gen.run_all()
+
+    def test_readme_mode_builds_about_page_from_profile_repo(self, tmp_path):
+        self.build_about(tmp_path, [issue(number=1)], "readme")
+        html = (tmp_path / "dist" / "about.html").read_text(encoding="utf-8")
+        assert self.README_HTML in html
+        index = (tmp_path / "dist" / "index.html").read_text(encoding="utf-8")
+        assert "about.html" in index
+
+    def test_readme_mode_without_readme_has_no_about(self, tmp_path):
+        self.build_about(tmp_path, [issue(number=1)], "readme", readme=False)
+        assert not (tmp_path / "dist" / "about.html").exists()
+        index = (tmp_path / "dist" / "index.html").read_text(encoding="utf-8")
+        assert "about.html" not in index
+
+    def test_mixed_mode_concatenates_post_and_readme(self, tmp_path):
+        self.build_about(tmp_path, [issue(number=2, body=self.ABOUT)], "mixed")
+        html = (tmp_path / "dist" / "about.html").read_text(encoding="utf-8")
+        assert "About body." in html
+        assert "<hr>" in html
+        assert self.README_HTML in html
+        # the composite owns about.html; the post keeps its canonical page
+        assert (tmp_path / "dist" / "post" / "2.html").exists()
+
+    def test_mixed_without_readme_degrades_to_issue(self, tmp_path):
+        self.build_about(tmp_path, [issue(number=2, body=self.ABOUT)], "mixed", readme=False)
+        # no composite page; the slug alias still redirects to the post
+        alias = (tmp_path / "dist" / "about.html")
+        assert alias.exists()
+        assert "location.replace" in alias.read_text(encoding="utf-8")
+        html = (tmp_path / "dist" / "post" / "2.html").read_text(encoding="utf-8")
+        assert "About body." in html
+
+    def test_none_mode_has_no_about_and_no_alias(self, tmp_path):
+        self.build_about(tmp_path, [issue(number=2, body=self.ABOUT)], "none")
+        assert not (tmp_path / "dist" / "about.html").exists()
+        html = (tmp_path / "dist" / "post" / "2.html").read_text(encoding="utf-8")
+        assert "About body." in html
+
+    def test_invalid_mode_rejected(self, tmp_path):
+        path = tmp_path / "config.toml"
+        path.write_text(
+            CONFIG.replace("[site]\n", '[site]\nabout = "bogus"\n'),
+            encoding="utf-8",
+        )
+        with pytest.raises(Exception):
+            load_config(path)

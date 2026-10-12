@@ -62,9 +62,14 @@ class FixtureRepo:
         self.owner = SimpleNamespace(login=owner)
         self._labels = [SimpleNamespace(**lb) for lb in data["labels"]]
         self._issues = [FixtureIssue(raw) for raw in data["issues"]]
+        # profile-repo README (<owner>/<owner>) for the about page modes
+        self._profile_readme = data.get("profile_readme")
 
     def get_labels(self):
         return list(self._labels)
+
+    def get_profile_readme(self):
+        return self._profile_readme
 
     def get_issues(self):
         return list(self._issues)
@@ -84,6 +89,9 @@ def load_repo(path: str | Path):
     # lookup is keyed on the stripped body. The fixture keeps the raw body
     # so the front matter is still readable as post metadata.
     html_by_body = {}
+    # profile README renders through the same markdown pipeline
+    if data.get("profile_readme") is not None and data.get("profile_readme_html"):
+        html_by_body[data["profile_readme"]] = data["profile_readme_html"]
     for issue in repo._issues:
         try:
             _, cleaned = frontmatter.split(issue.body)

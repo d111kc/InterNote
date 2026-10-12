@@ -32,6 +32,7 @@ I18N = {
     "posts": "篇文章",
     "postRepo": "源码",
     "postRefs": "参考资料",
+    "about": "关于",
 }
 
 ICONS = {

@@ -73,11 +73,13 @@ class Generator:
         *,
         markdown,
         root: str | Path = ".",
+        readme_fetch=None,
     ):
         self.config = config
         self.repo = repo
         self.repo_name = repo_name
         self.markdown = markdown
+        self.readme_fetch = readme_fetch
         self.root = Path(root)
 
         self.dist_dir = self.root / "dist"
@@ -145,6 +147,11 @@ class Generator:
         # from scratch but can still reuse the HTML.
         self.render_cache: dict[str, str] = {}
         self.render_cache_used: set[str] = set()
+        # profile-README render for the about page (readme/mixed modes);
+        # the key is its render-cache sha, so run_one can reuse the HTML
+        # a full build rendered without re-fetching anything
+        self.about_readme_html: str | None = None
+        self.about_readme_key: str | None = None
         # favicon/avatar state: source URL each cached dist/assets/*.png
         # was downloaded from, keyed by file name
         self.favicon_src: dict[str, str] = {}
@@ -158,6 +165,8 @@ class Generator:
                 cached = {}
             if isinstance(cached.get("render_cache"), dict):
                 self.render_cache = cached["render_cache"]
+            raw_key = cached.get("about_readme_key")
+            self.about_readme_key = raw_key if isinstance(raw_key, str) else None
             raw_sources = cached.get("favicon_src", "")
             # older builds stored a single string for the favicon only
             if isinstance(raw_sources, dict):
@@ -300,15 +309,28 @@ class Generator:
         # before the first page renders - not just before _create_lists.
         # Main posts only: sub pages are series parts.
         self.ctx["post_count"] = len(self.ctx["post_list"])
+        mode = self.ctx.get("about_mode", "issue")
         about = next(
             (e for e in self.ctx["post_list"].values() if e.get("slug") == "about"),
             None,
         )
-        self.ctx["about"] = (
-            {"url": about["post_url"], "title": about["post_title"]}
-            if about
-            else None
-        )
+        if mode == "none":
+            self.ctx["about"] = None
+        elif mode == "readme" and self.about_readme_html:
+            self.ctx["about"] = {"url": "about.html", "title": self.i18n["about"]}
+        elif mode == "mixed" and about is not None and self.about_readme_html:
+            # config-owned about.html: post body + profile README
+            self.ctx["about"] = {"url": "about.html", "title": about["post_title"]}
+        elif mode == "mixed" and about is not None:
+            # mixed degraded (no README): behaves exactly like issue mode
+            self.ctx["about"] = {"url": about["post_url"], "title": about["post_title"]}
+        else:
+            # issue mode, or readme/mixed without a README: no about page
+            self.ctx["about"] = (
+                {"url": about["post_url"], "title": about["post_title"]}
+                if about and mode == "issue"
+                else None
+            )
 
     def run_all(self):
         print("====== start create static html ======")
@@ -316,12 +338,14 @@ class Generator:
         self._fetch_favicon()
         self._fetch_social_icons()
         self._load_emoji_map()
+        self._fetch_about_readme()
         for issue in self.repo.get_issues():
             self._add_entry(issue)
         # masthead folio + header-nav data, before any page renders
         self._resolve_folio()
         for entry in list(self.ctx["post_list"].values()):
             self._create_post(entry)
+        self._create_about_page()
         self._create_lists()
         self._create_feed()
         self._finalize()
@@ -335,6 +359,7 @@ class Generator:
             self._clean()
         # masthead folio + header-nav data; the state just loaded is the
         # full picture
+        self._fetch_about_readme()
         self._resolve_folio()
         self.sources_dir.mkdir(parents=True, exist_ok=True)
         self._fetch_favicon()
@@ -347,6 +372,16 @@ class Generator:
             entry = self._add_entry(issue)
             if entry is not None:
                 self._create_post(entry)
+                # mixed about: refresh the page when its post part changed;
+                # the README half rides the render cache from the last full
+                # build (a README edit fires no issue event to hook onto)
+                if entry.get("slug") == "about" and self.ctx.get(
+                    "about_mode", "issue"
+                ) == "mixed":
+                    self.about_readme_html = self.render_cache.get(
+                        self.about_readme_key or ""
+                    )
+                    self._create_about_page()
         # A withdrawn post still has to reach the lists, the feed and the
         # state file, otherwise they keep linking to a page that is gone.
         self._create_lists()
@@ -798,6 +833,114 @@ class Generator:
         self.render_cache_used.add(key)
         return html
 
+    def _fetch_about_readme(self):
+        """Fetch + render the profile repo's README for the about page.
+
+        readme/mixed modes only; the rendered HTML rides the shared
+        render cache, so run_one can reuse a previous full build's copy
+        via the persisted about_readme_key without re-rendering.
+        """
+        if self.ctx.get("about_mode", "issue") not in ("readme", "mixed"):
+            return
+        fetch = self.readme_fetch or getattr(self.repo, "get_profile_readme", None)
+        if fetch is None:
+            return
+        try:
+            raw = fetch()
+        except Exception as error:
+            print(
+                "warning: profile README fetch failed, about page degrades: {}".format(
+                    error
+                )
+            )
+            return
+        if not raw:
+            return
+        self.about_readme_key = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+        self.about_readme_html = self._render_body(raw)
+
+    def _create_about_page(self):
+        """Render dist/about.html (readme/mixed modes).
+
+        mixed = the slug=about post's body followed by the profile README;
+        readme = the README alone. The slug=about post keeps its canonical
+        post/<id>.html page either way - only the about.html alias is
+        suppressed here (config wins over the post).
+        """
+        if not self.about_readme_html:
+            return
+        mode = self.ctx.get("about_mode", "issue")
+        about = next(
+            (e for e in self.ctx["post_list"].values() if e.get("slug") == "about"),
+            None,
+        )
+        if about is not None and mode == "mixed":
+            md_path = self.sources_dir / f"{about['number']}.md"
+            body = self._decorate_body(
+                about, self._render_body(md_path.read_text(encoding="utf-8"))
+            )
+            body += "\n<hr>\n" + self.about_readme_html
+            title = about["post_title"]
+            created_date = about["created_date"]
+            date_label_color = about["date_label_color"]
+            updated_date = about["updated_date"]
+            issue_url = self.ctx["blog_repo_url"] + "/issues/" + str(about["number"])
+            description = about["description"]
+        else:
+            body = self.about_readme_html
+            title = self.i18n["about"]
+            created_date = ""
+            date_label_color = ""
+            updated_date = ""
+            issue_url = None
+            description = ""
+
+        page = dict(self.ctx)
+        page["post"] = {
+            "title": title,
+            "url": self.ctx["home_url"] + "/about.html",
+            "issue_url": issue_url,
+            "description": description,
+            "body": body,
+            # the about issue keeps its own comment thread on its canonical
+            # page; the composite about.html carries none
+            "comments": False,
+            "refs": about.get("refs", []) if about else [],
+            "repo": about.get("repo") if about else None,
+            "style": self.ctx["style"],
+            "script": self.ctx["script"],
+            "head": self.ctx["head"],
+            "top": 0,
+            "created_date": created_date,
+            "date_label_color": date_label_color,
+            "updated_date": updated_date,
+            "labels": [],
+            "footer_text": self.ctx["footer_text"],
+            "highlight": 0,
+            # StrictUndefined: every key the post template may touch must
+            # exist, mirroring _create_post's page dict.
+            "series": None,
+            "series_crumb": None,
+            "series_pager": None,
+        }
+        if '<pre class="notranslate">' in body:
+            page["post"]["highlight"] = 1 if '<div class="highlight' in body else 2
+        keys = ["sun", "moon", "sync", "home", "github", "rss", "pencil"]
+        if page["post"]["highlight"] != 0:
+            keys.extend(["copy", "check"])
+        keys.extend(
+            ["search", "tag", "calendar", "book", "post", "bars", "arrow-up", "arrow-down"]
+        )
+        context = {
+            "site": page,
+            "post": page["post"],
+            "post_list": {},
+            "i18n": self.i18n,
+            "icons": {key: ICONS.get(key) for key in keys},
+        }
+        self.renderer.render_to("post", context, self.dist_dir / "about.html")
+        print("create about page (%s mode)" % mode)
+
     # ---------------------------------------------------------------- pages
 
     def _decorate_body(self, entry, post_body):
@@ -949,6 +1092,18 @@ class Generator:
         )
 
         alias_dir = entry.get("alias_dir")
+        _about_mode = self.ctx.get("about_mode", "issue")
+        if (
+            alias_dir
+            and entry.get("slug") == "about"
+            and (
+                _about_mode == "none"
+                or (_about_mode in ("readme", "mixed") and self.about_readme_html)
+            )
+        ):
+            # config owns about.html in these modes (or "none" hides the
+            # page entirely); the post keeps only its canonical page
+            alias_dir = None
         if alias_dir:
             # `slug` mints a root-level alias that redirects to the canonical
             # post/<id>.html page: meta refresh covers no-JS crawlers,
@@ -1052,6 +1207,7 @@ class Generator:
         state = {
             "post_list": self.ctx["post_list"],
             "render_cache": pruned,
+            "about_readme_key": self.about_readme_key,
             "favicon_src": self.favicon_src,
             "emoji_map": self.emoji_map,
         }

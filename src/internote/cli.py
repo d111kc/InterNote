@@ -57,7 +57,13 @@ def main(
         client = GithubClient(token, repo)
         repo_obj = client.repo
         markdown = client.markdown_to_html
-    generator = Generator(cfg, repo_obj, repo_name=repo, markdown=markdown)
+    generator = Generator(
+        cfg,
+        repo_obj,
+        repo_name=repo,
+        markdown=markdown,
+        readme_fetch=client.get_profile_readme if not fixtures else None,
+    )
     if issue_number is None:
         generator.run_all()
     else:

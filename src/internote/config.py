@@ -15,6 +15,12 @@ class SiteConfig(BaseModel):
 
     title: str
     sub_title: str = ""
+    # about page source: "issue" = a post with `slug = "about"` (the
+    # default, unchanged behaviour); "readme" = the profile repo's
+    # (<owner>/<owner>) README; "mixed" = that post's body + the README on
+    # one page (degrades to readme when no such post exists); "none" =
+    # no about page and no nav entry.
+    about: Literal["issue", "readme", "mixed", "none"] = "issue"
     avatar_url: str = ""
     # Empty = use the blog repo owner's GitHub avatar (downloaded at build
     # time); a URL = use that image; "none" = no favicon at all.
@@ -126,6 +132,7 @@ class InterNoteConfig(BaseModel):
             "sub_title": site.sub_title,
             "avatar_url": site.avatar_url,
             "favicon": site.favicon,
+            "about_mode": site.about,
             "home_url": site.home_url,
             "posts_per_page": layout.posts_per_page,
             "start_date": layout.start_date,

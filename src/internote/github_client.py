@@ -84,3 +84,24 @@ class GithubClient:
 
     def markdown_to_html(self, text: str) -> str:
         return markdown_to_html(text, self.token)
+
+    def get_profile_readme(self) -> str | None:
+        """Raw README of the owner's profile repo (<owner>/<owner>).
+
+        Returns None when the repo or its README does not exist (a 404
+        is the normal "no profile README" answer, not an error); any
+        other failure raises so the caller can warn and degrade.
+        """
+        owner = self.repo_name.partition("/")[0]
+        headers = {
+            "Authorization": "token {}".format(self.token),
+            "Accept": "application/vnd.github.raw+json",
+        }
+        response = requests.get(
+            "https://api.github.com/repos/{}/{}/readme".format(owner, owner),
+            headers=headers,
+        )
+        if response.status_code == 404:
+            return None
+        response.raise_for_status()
+        return response.text

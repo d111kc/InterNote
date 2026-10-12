@@ -47,6 +47,7 @@
        replacing the old breadcrumb + standalone listing pair. #}
     <div class="in-post-meta-box">
       <div class="in-post-meta">
+        {% if post.created_date %}
         <span class="in-meta-date">
           {{ icon('calendar') }}
           <span style="color:{{ post.date_label_color }}">{{ post.created_date }}</span>
@@ -54,6 +55,7 @@
           <span class="in-meta-updated">({{ i18n.updated }} {{ post.updated_date }})</span>
           {% endif %}
         </span>
+        {% endif %}
         {% if post.labels %}
         <span class="in-meta-labels">
           {{ icon('tag') }}

@@ -5,6 +5,7 @@
 title = "InterNote"
 sub_title = "My notes on everything"
 avatar_url = "https://github.githubassets.com/favicons/favicon.svg"
+# about = "issue"           # 关于页来源："issue"（默认）= slug="about" 的文章；"readme" = GitHub 用户名仓库（<owner>/<owner>）的 README；"mixed" = 该文章正文 + README 同页拼接（无文章时退化为 readme）；"none" = 无关于页、导航无入口
 # favicon = ""              # 留空 = 自动下载博客仓库 owner 的 GitHub 头像作为站点图标；填 URL 用自定义图；"none" 关闭
 # home_url = ""             # 留空则自动推导（GitHub Pages 地址）
 
