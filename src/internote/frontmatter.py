@@ -41,7 +41,7 @@ FIELDS = frozenset({"date", "draft", "comments", "pinned", "slug", "refs", "repo
 #: title semantics), so ``title`` is optional; a comment with neither a
 #: title nor an h1 fails the build rather than showing an empty row in
 #: the series listing.
-SUB_FIELDS = frozenset({"title", "order"})
+SUB_FIELDS = frozenset({"title", "order", "refs", "repo"})
 
 
 class FrontMatterError(ValueError):

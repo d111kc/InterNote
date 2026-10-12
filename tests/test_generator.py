@@ -832,3 +832,61 @@ class TestRefsRepoMeta:
         html = (tmp_path / "dist" / "post" / "1.html").read_text(encoding="utf-8")
         assert "in-meta-repo" not in html
         assert "in-meta-refs" not in html
+
+
+class TestSubPostRefsOverride:
+    """Sub posts may set their own refs/repo; absent keys inherit the
+    parent issue's front matter values."""
+
+    PARENT = (
+        "+++\n"
+        'repo = "https://github.com/you/parent-repo"\n'
+        'refs = [{ name = "ParentDoc", url = "https://parent.example" }]\n'
+        "+++\nParent body."
+    )
+
+    def test_sub_post_inherits_parent_refs_and_repo(self, tmp_path):
+        build(
+            tmp_path,
+            [
+                issue(
+                    number=7,
+                    body=self.PARENT,
+                    comments=[(9001, '+++\ntitle = "Part"\n+++\n# Part\nBody.', "OWNER")],
+                )
+            ],
+        )
+        html = (tmp_path / "dist" / "post" / "7_9001.html").read_text(encoding="utf-8")
+        assert 'href="https://github.com/you/parent-repo"' in html
+        assert 'href="https://parent.example"' in html
+
+    def test_sub_post_front_matter_overrides(self, tmp_path):
+        sub = (
+            "+++\n"
+            'title = "Part"\n'
+            'repo = "https://github.com/you/sub-repo"\n'
+            'refs = [{ name = "SubDoc", url = "https://sub.example" }]\n'
+            "+++\n"
+            "# Part\nBody."
+        )
+        build(
+            tmp_path,
+            [issue(number=7, body=self.PARENT, comments=[(9001, sub, "OWNER")])],
+        )
+        sub_html = (tmp_path / "dist" / "post" / "7_9001.html").read_text(encoding="utf-8")
+        assert 'href="https://github.com/you/sub-repo"' in sub_html
+        assert 'href="https://sub.example"' in sub_html
+        assert "parent-repo" not in sub_html
+        assert "ParentDoc" not in sub_html
+        # the parent page keeps its own values
+        parent = (tmp_path / "dist" / "post" / "7.html").read_text(encoding="utf-8")
+        assert 'href="https://github.com/you/parent-repo"' in parent
+        assert 'href="https://parent.example"' in parent
+
+    def test_sub_post_refs_validation_still_applies(self, tmp_path):
+        sub = '+++\ntitle = "Part"\nrepo = "not-a-url"\n+++\n# Part\nBody.'
+        with pytest.raises(FrontMatterError):
+            build(
+                tmp_path,
+                [issue(number=7, body=self.PARENT, comments=[(9001, sub, "OWNER")])],
+            )

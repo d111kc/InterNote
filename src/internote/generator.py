@@ -633,6 +633,14 @@ class Generator:
                     "order": meta.get("order"),
                     "created_at": int(created.timestamp()),
                     "body": sub_body,
+                    # Sub posts may override the parent's reference links;
+                    # keys absent here mean "inherit from the parent entry"
+                    # (resolved in _render_sub_page).
+                    **{
+                        key: meta[key]
+                        for key in ("refs", "repo")
+                        if key in meta
+                    },
                 }
             )
 
@@ -715,9 +723,10 @@ class Generator:
             # Sub pages carry giscus too; the parent's comments = false
             # opt-out applies to the whole series.
             "comments": entry["comments"],
-            # Reference links come from the parent issue's front matter.
-            "refs": entry.get("refs", []),
-            "repo": entry.get("repo"),
+            # Reference links: the sub post's own front matter wins;
+            # otherwise the parent issue's values are inherited.
+            "refs": parsed.get("refs", entry.get("refs", [])),
+            "repo": parsed.get("repo", entry.get("repo")),
             # _decorate_body may have appended alert CSS / MathJax to the
             # entry copies; ctx["style"] would silently drop them.
             "style": entry["style"],
