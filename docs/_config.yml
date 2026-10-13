@@ -1,0 +1,4 @@
+theme: jekyll-theme-cayman
+title: InterNote 文档
+description: 基于 GitHub Issues 的静态博客生成器
+baseurl: /InterNote
