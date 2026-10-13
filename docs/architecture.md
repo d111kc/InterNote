@@ -26,10 +26,15 @@ src/internote/
 ## 模板与插件
 
 - 模板 6 页：`post-list` / `post` / `tag` / `404` / `alias` + `base` 布局；共享 UI 全部在 `components/macros.j2.html`，`footer` / `comments` 为纯 include
-- `base.j2.html` 拥有 `<style>` 包装：子模板用 `{% block style %}` 填充裸 CSS
+- `base.j2.html` 拥有 `<style>` 包装：子模板填充 `style` block 写裸 CSS，形如：
+
+  ```jinja
+  {% raw %}{% block style %}...{% endblock %}{% endraw %}
+  ```
+
 - 渲染配置：`autoescape off`（正文是 GitHub API 预渲染的 HTML）、`StrictUndefined`（缺上下文键直接报错而非静默空白）
 - 插件 7 个全部零依赖：`theme`（三态明暗）、`toc`（目录 + 滚动高亮）、`fab`（悬浮工具栏）、`lightbox`（图片查看）、`code-copy`（代码复制）、`giscus`（评论懒加载）、`search`（搜索弹窗）
-- 插件原样拷贝到 `dist/plugins/`，**不经 Jinja**：配置通过服务端渲染的 `data-*` 属性传入，模板里不出现 `{{ }}` 占位符
+- 插件原样拷贝到 `dist/plugins/`，**不经 Jinja**：配置通过服务端渲染的 `data-*` 属性传入，模板里不出现 Jinja 输出定界符（成对双大括号）
 - `window.icons` 只保留运行时需要的图标：静态图标全部由服务端 `icon()` 宏渲染
 
 ## 搜索与列表数据
