@@ -35,7 +35,9 @@ on:
     # `closed` is what actually unpublishes a post: run_one sees a non-open
     # state and drops the entry from the pages, the lists, the feed, the state
     # file and the search index. Without a cron there is no later sweep.
-    types: [opened, edited, closed]
+    # `reopened` is the mirror case: without it a reopened issue never
+    # triggers a build and the post stays offline until some other event.
+    types: [opened, edited, closed, reopened]
   issue_comment:
     # Series sub posts are born from comments: the issues events above do
     # NOT fire when a comment is added, so without this trigger a new sub
