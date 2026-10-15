@@ -10,3 +10,7 @@ build/
 *.egg-info/
 .pytest_cache/
 temp/
+.claude/skills/
+.opencode/skills/
+.atomcode/artifacts/
+.atomcode/local/

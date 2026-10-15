@@ -51,3 +51,4 @@ README is Chinese — keep new user-facing docs consistent.
 - No TDD/SDD: do not write failing tests first or follow spec-driven development (too slow / token-heavy). Keep existing tests passing (`uv run pytest -q` before committing); add/adjust tests only when touching tested behavior. Commits atomic with English semantic prefixes (`feat:`/`fix:`/`refactor:`/`docs:`/`chore:`).
 - Only `main` branch; push only with explicit user approval (global rule).
 - `temp/` is git-ignored scratch space for this project (scripts, config copies).
+- Agent skills live in `.agents/skills/` (Agent Skills standard — scanned natively at project level by AtomCode, OpenCode and pi). After editing a skill run `scripts/install-skills.sh` to mirror it into `.claude/skills/` and `.opencode/skills/` for Claude Code (both mirrors are git-ignored).
