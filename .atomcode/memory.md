@@ -1,0 +1,2 @@
+- 本地 md 渲染模式（posts/*.md 直接渲染、与 issue 混合、config.toml 配 mode、本地页 URL 带特定后缀）用户 2026-10 决定搁置、以后再开发；当时卡点：md→HTML 渲染器选型（GitHub API vs 纯 Python 依赖）未决
+- InterNote 双仓库：博客仓库是 interset-wq/blog（站点 https://interset-wq.github.io/blog/，Pages 从 main 分支 /docs 的另有生成器文档站 interset-wq.github.io/InterNote）。博客 CI 由 INTERNOTE_REF 钉住生成器 release——本仓库 push main 不影响线上；生效需打 release + 提升 INTERNOTE_REF + 同步博客仓库 workflow（API PUT 404，clone 后 push）。博客 config.toml 必须与 config.py schema 同步（extra=forbid）。
